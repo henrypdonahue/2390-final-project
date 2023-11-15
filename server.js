@@ -2,9 +2,12 @@
 let http = require("http");
 const { JIFFServer } = require("jiff-mpc");
 const express = require("express");
+const fs = require("fs");
+
+const config = JSON.parse(fs.readFileSync("config.json"));
+const port = config.server.port;
 
 const app = express();
-const port = 8080;
 
 let DB = {};
 
@@ -35,7 +38,7 @@ http = http.Server(app);
 
 // Start the server
 const server = http.listen(port, function () {
-  console.log("listening on *:8080");
+  console.log("listening on *:", port);
 });
 
 // Create JIFF server

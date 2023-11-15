@@ -1,12 +1,21 @@
 const assert = require("assert");
 const { JIFFClient } = require("jiff-mpc");
+const fs = require("fs");
+
+const config = JSON.parse(fs.readFileSync("config.json"));
+const serverHost = config.server.host;
+const serverPort = config.server.port;
 
 // Connect to the server.
-const jiffClient = new JIFFClient("http://localhost:8080", "test", {
-  crypto_provider: true,
-  party_id: 1,
-  party_count: 2,
-});
+const jiffClient = new JIFFClient(
+  "http://" + serverHost + ":" + serverPort,
+  "test",
+  {
+    crypto_provider: true,
+    party_id: 1,
+    party_count: 2,
+  },
+);
 jiffClient.wait_for([1, "s1"], async function () {
   // Receive the analyst shares from server.
   jiffClient.listen("shares", async function (sender_id, message) {

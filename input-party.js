@@ -1,9 +1,14 @@
 const sodium = require("libsodium-wrappers-sumo");
 const { JIFFClient } = require("jiff-mpc");
 const axios = require("axios");
+const fs = require("fs");
+
+const config = JSON.parse(fs.readFileSync("config.json"));
+const serverHost = config.server.host;
+const serverPort = config.server.port;
 
 async function submitData(token, analystShare, serverShare) {
-  const url = "http://localhost:8080/submit";
+  const url = "http://" + serverHost + ":" + serverPort + "/submit";
   const requestBody = {
     token: token,
     analystShare: analystShare,
@@ -11,12 +16,12 @@ async function submitData(token, analystShare, serverShare) {
   };
   axios
     .post(url, requestBody)
-    .then((response) => console.log("submit response: ", response.statusText))
-    .catch((error) => console.log("failed to submit data: ", error.code));
+    .then((response) => console.log("submit response:", response.statusText))
+    .catch((error) => console.log("failed to submit data:", error.code));
 }
 
 async function deleteData(token) {
-  const url = `http://localhost:8080/delete`;
+  const url = "http://" + serverHost + ":" + serverPort + "/delete";
 
   const req = {
     data: {
@@ -26,8 +31,8 @@ async function deleteData(token) {
 
   axios
     .delete(url, req)
-    .then((response) => console.log("delete response: ", response.statusText))
-    .catch((error) => console.log("failed to delete data: ", error.code));
+    .then((response) => console.log("delete response:", response.statusText))
+    .catch((error) => console.log("failed to delete data:", error.code));
 }
 
 // Read command line arguments
