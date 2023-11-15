@@ -21,6 +21,7 @@ app.post("/submit", (req, res) => {
 // Define an endpoint for deleting data based on a token
 app.delete("/delete/:token", (req, res) => {
   const { token } = req.params;
+  console.log("DELETE!!");
   // Check if the token exists in the DB
   if (DB[token]) {
     // Delete the entry corresponding to the token
@@ -32,6 +33,11 @@ app.delete("/delete/:token", (req, res) => {
 });
 
 http = http.Server(app);
+
+// Start the server
+const server = http.listen(port, function () {
+  console.log("listening on *:8080");
+});
 
 // Create JIFF server
 const jiffServer = new JIFFServer(http, { logs: false });
@@ -68,19 +74,17 @@ computationClient.wait_for([1, "s1"], async function () {
     );
   }
 
-  // Now we can do whatever computation we want. For example, we can add the two submissions together.
-  let sum = shares[0];
-  for (let i = 1; i < shares.length; i++) {
-    sum = sum.sadd(shares[i]);
+  // calculate sum
+  let output = 0;
+  if (shares.length > 0) {
+    let sum = shares[0];
+    for (let i = 1; i < shares.length; i++) {
+      sum = sum.sadd(shares[i]);
+    }
+    // reveal results
+    output = await computationClient.open(sum, [1, "s1"]);
   }
-
-  // Reveal the result.
-  const output = await computationClient.open(sum, [1, "s1"]);
   console.log("Result is", output);
   computationClient.disconnect(true, true);
-});
-
-// Start the server
-http.listen(port, function () {
-  console.log("listening on *:8080");
+  server.close();
 });

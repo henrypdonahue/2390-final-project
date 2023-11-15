@@ -48,7 +48,11 @@ async function main() {
       2,
       jiffClient.Zp,
     );
-    const token = Buffer.from(sodium.randombytes_buf(32)).toString("base64");
+    const tokenRand = Buffer.from(sodium.randombytes_buf(32)).toString(
+      "base64",
+    );
+    // remove special character '/', otherwise a bad request
+    const token = tokenRand.replace(/\//g, "_");
     submitData(token, shares[1], shares["s1"]);
     console.log("to delete submission, use token: ", token);
   } else if (command === "delete") {

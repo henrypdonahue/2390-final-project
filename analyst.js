@@ -29,14 +29,16 @@ jiffClient.wait_for([1, "s1"], async function () {
       );
     }
 
-    // Now we can do whatever computation we want. For example, we can add the two submissions together.
-    let sum = shares[0];
-    for (let i = 1; i < shares.length; i++) {
-      sum = sum.sadd(shares[i]);
+    // calculate sum
+    let output = 0;
+    if (shares.length > 0) {
+      let sum = shares[0];
+      for (let i = 1; i < shares.length; i++) {
+        sum = sum.sadd(shares[i]);
+      }
+      // reveal results
+      output = await computationClient.open(sum, [1, "s1"]);
     }
-
-    // Reveal the result.
-    const output = await jiffClient.open(sum, [1, "s1"]);
     console.log("Result is", output);
     jiffClient.disconnect(true, true);
   });
