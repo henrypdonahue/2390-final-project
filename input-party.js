@@ -14,7 +14,6 @@ async function submitData(token, analystShare, serverShare) {
     .catch((error) => console.log("failed to submit data: ", error.code));
 }
 
-// Function to delete data
 async function deleteData(token) {
   const url = `http://localhost:8080/delete/${token}`;
 
