@@ -4,29 +4,24 @@ const axios = require("axios");
 
 async function submitData(token, analystShare, serverShare) {
   const url = "http://localhost:8080/submit";
-  axios.post(url, {
-    token: token,
-    analystShare: analystShare,
-    serverShare: serverShare
-  })
-  .then((response) => console.log("submit response: ", response.statusText))
-  .catch((error) => console.log("failed to submit data: ", error.code));
-
+  axios
+    .post(url, {
+      token: token,
+      analystShare: analystShare,
+      serverShare: serverShare,
+    })
+    .then((response) => console.log("submit response: ", response.statusText))
+    .catch((error) => console.log("failed to submit data: ", error.code));
 }
 
 // Function to delete data
 async function deleteData(token) {
   const url = `http://localhost:8080/delete/${token}`;
 
-  const response = await fetch(url, {
-    method: "DELETE",
-  });
-
-  if (response.ok) {
-    console.log("Data deleted successfully");
-  } else {
-    console.error("Failed to delete data");
-  }
+  axios
+    .delete(url)
+    .then((response) => console.log("delete response: ", response.statusText))
+    .catch((error) => console.log("failed to delete data: ", error.code));
 }
 
 // Read command line arguments
@@ -54,9 +49,9 @@ async function main() {
       jiffClient.Zp,
     );
     const token = Buffer.from(sodium.randombytes_buf(32)).toString("base64");
-    submitData(token, shares[1], shares['s1']);
+    submitData(token, shares[1], shares["s1"]);
+    console.log("to delete submission, use token: ", token);
   } else if (command === "delete") {
-    console.log("deleting token", input);
     deleteData(input);
   }
 }

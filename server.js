@@ -6,10 +6,7 @@ const express = require("express");
 const app = express();
 const port = 8080;
 
-let DB = {
-  "wnbROE838fxBgtGE59LfuNQ=": { analyst: 15789588, server: 988161 },
-  "JsOzGXTQA4hJ1QelE2g5WDc=": { analyst: 9064049, server: 7713720 },
-};
+let DB = {};
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
@@ -28,9 +25,9 @@ app.delete("/delete/:token", (req, res) => {
   if (DB[token]) {
     // Delete the entry corresponding to the token
     delete DB[token];
-    res.status(200).json({ message: "Data deleted successfully" });
+    res.status(200).json({ message: "data deleted successfully" });
   } else {
-    res.status(404).json({ message: "Token not found" });
+    res.status(404).json({ message: "token not found" });
   }
 });
 
@@ -80,9 +77,10 @@ computationClient.wait_for([1, "s1"], async function () {
   // Reveal the result.
   const output = await computationClient.open(sum, [1, "s1"]);
   console.log("Result is", output);
+  computationClient.disconnect(true, true);
 });
 
 // Start the server
 http.listen(port, function () {
-  console.log('listening on *:8080');
+  console.log("listening on *:8080");
 });
