@@ -7,6 +7,7 @@ const config = JSON.parse(fs.readFileSync("config.json"));
 const serverHost = config.server.host;
 const serverPort = config.server.port;
 
+// sends submit request to server
 async function submitData(token, analystShare, serverShare) {
   const url = "http://" + serverHost + ":" + serverPort + "/submit";
   const requestBody = {
@@ -20,19 +21,27 @@ async function submitData(token, analystShare, serverShare) {
     .catch((error) => console.log("failed to submit data:", error.code));
 }
 
+// sends delete request to server
 async function deleteData(token) {
   const url = "http://" + serverHost + ":" + serverPort + "/delete";
-
   const req = {
     data: {
       token: token,
     },
   };
-
   axios
     .delete(url, req)
     .then((response) => console.log("delete response:", response.statusText))
     .catch((error) => console.log("failed to delete data:", error.code));
+}
+
+// request for analyst's public key
+async function getPublicKey() {
+  const url = "http://" + serverHost + ":" + "3000" + "/public-key";
+  const response = await axios
+    .get(url)
+    .catch((error) => console.log("failed to get public key:", error.code));
+  return new Uint8Array(JSON.parse(response.data.message));
 }
 
 // Read command line arguments
@@ -42,6 +51,8 @@ async function main() {
 
   await sodium.ready;
 
+  let publicKey = await getPublicKey();
+  console.log(publicKey);
   // Share the input with server
   if (command === "input") {
     input = parseInt(input, 10);
@@ -60,10 +71,10 @@ async function main() {
       jiffClient.Zp,
     );
     const token = Buffer.from(sodium.randombytes_buf(32)).toString("base64");
-    submitData(token, shares[1], shares["s1"]);
+    await submitData(token, shares[1], shares["s1"]);
     console.log("to delete submission, use token: ", token);
   } else if (command === "delete") {
-    deleteData(input);
+    await deleteData(input);
   }
 }
 
