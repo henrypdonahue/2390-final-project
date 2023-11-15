@@ -6,6 +6,8 @@ const fs = require("fs");
 const config = JSON.parse(fs.readFileSync("config.json"));
 const serverHost = config.server.host;
 const serverPort = config.server.port;
+const analystHost = config.analyst.host;
+const analystPort = config.analyst.port;
 
 // sends submit request to server
 async function submitData(token, analystShare, serverShare) {
@@ -37,7 +39,7 @@ async function deleteData(token) {
 
 // request for analyst's public key
 async function getPublicKey() {
-  const url = "http://" + serverHost + ":" + "3000" + "/public-key";
+  const url = "http://" + analystHost + ":" + analystPort + "/public-key";
   const response = await axios
     .get(url)
     .catch((error) => console.log("failed to get public key:", error.code));

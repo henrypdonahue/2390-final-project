@@ -8,6 +8,7 @@ const express = require("express");
 const config = JSON.parse(fs.readFileSync("config.json"));
 const serverHost = config.server.host;
 const serverPort = config.server.port;
+const port = config.analyst.port;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -31,8 +32,8 @@ function startKeyServer(publicKey) {
       res.status(200).json({ message: "[" + publicKey.toString() + "]" });
     }
   });
-  const server = app.listen(3000, () => {
-    console.log("analyst is running on port 3000");
+  const server = app.listen(port, () => {
+    console.log("analyst is running on port", port);
   });
   return server;
 }
