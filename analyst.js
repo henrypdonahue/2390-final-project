@@ -37,7 +37,7 @@ jiffClient.wait_for([1, "s1"], async function () {
         sum = sum.sadd(shares[i]);
       }
       // reveal results
-      output = await computationClient.open(sum, [1, "s1"]);
+      output = await jiffClient.open(sum, [1, "s1"]);
     }
     console.log("Result is", output);
     jiffClient.disconnect(true, true);

@@ -19,9 +19,8 @@ app.post("/submit", (req, res) => {
 });
 
 // Define an endpoint for deleting data based on a token
-app.delete("/delete/:token", (req, res) => {
-  const { token } = req.params;
-  console.log("DELETE!!");
+app.delete("/delete", (req, res) => {
+  const token = req.body.token;
   // Check if the token exists in the DB
   if (DB[token]) {
     // Delete the entry corresponding to the token
