@@ -3,7 +3,6 @@ let http = require("http");
 const { JIFFServer } = require("jiff-mpc");
 const express = require("express");
 const fs = require("fs");
-const assert = require("assert");
 
 const config = JSON.parse(fs.readFileSync("config.json"));
 const port = config.server.port;

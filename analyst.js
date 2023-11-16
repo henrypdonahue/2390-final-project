@@ -69,6 +69,7 @@ async function main() {
   jiffClient.wait_for([1, "s1"], async function () {
     // send public key to server
     console.log("computation initialized, press enter to start...");
+    process.stdout.write("> ");
     rl.on("line", function (_) {
       // send begin signal to server
       jiffClient.emit("begin", ["s1"], "");
