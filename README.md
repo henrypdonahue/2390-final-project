@@ -28,3 +28,5 @@ Delete data before analyst runs compute
 ```bash
 node input-party.js delete <token>
 ```
+
+End the session in the analyst terminal by hitting enter
