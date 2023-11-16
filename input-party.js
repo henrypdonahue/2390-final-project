@@ -49,7 +49,6 @@ async function getPublicKey() {
 function encrypt(plainText, recipientPublicKey) {
   const senderKeyPair = sodium.crypto_box_keypair();
   const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
-  console.log(plainText.toString());
   return {
     senderPublicKey: "[" + senderKeyPair.publicKey.toString() + "]",
     cipherText:
@@ -73,7 +72,6 @@ async function main() {
   await sodium.ready;
 
   let publicKey = await getPublicKey();
-  console.log(publicKey);
   // Share the input with server
   if (command === "input") {
     input = parseInt(input, 10);
@@ -94,7 +92,6 @@ async function main() {
     const token = Buffer.from(sodium.randombytes_buf(32)).toString("base64");
     // encrypt the share for analyst
     const analystShare = encrypt(shares[1], publicKey);
-    console.log(analystShare);
     // send submit data request
     await submitData(token, analystShare, shares["s1"]);
     console.log("to delete submission, use token: ", token);
