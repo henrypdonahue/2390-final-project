@@ -46,6 +46,25 @@ async function getPublicKey() {
   return new Uint8Array(JSON.parse(response.data.message));
 }
 
+function encrypt(plainText, recipientPublicKey) {
+  const senderKeyPair = sodium.crypto_box_keypair();
+  const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
+  console.log(plainText.toString());
+  return {
+    senderPublicKey: "[" + senderKeyPair.publicKey.toString() + "]",
+    cipherText:
+      "[" +
+      sodium.crypto_box_easy(
+        plainText.toString(),
+        nonce,
+        recipientPublicKey,
+        senderKeyPair.privateKey,
+      ) +
+      "]",
+    nonce: "[" + nonce.toString() + "]",
+  };
+}
+
 // Read command line arguments
 async function main() {
   const command = process.argv[2];
@@ -73,7 +92,11 @@ async function main() {
       jiffClient.Zp,
     );
     const token = Buffer.from(sodium.randombytes_buf(32)).toString("base64");
-    await submitData(token, shares[1], shares["s1"]);
+    // encrypt the share for analyst
+    const analystShare = encrypt(shares[1], publicKey);
+    console.log(analystShare);
+    // send submit data request
+    await submitData(token, analystShare, shares["s1"]);
     console.log("to delete submission, use token: ", token);
   } else if (command === "delete") {
     await deleteData(input);

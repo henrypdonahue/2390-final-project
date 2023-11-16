@@ -17,7 +17,7 @@ const rl = readline.createInterface({
 
 async function generateKeyPair() {
   await sodium.ready;
-  return sodium.crypto_sign_keypair();
+  return sodium.crypto_box_keypair();
 }
 
 function startKeyServer(publicKey) {
@@ -36,6 +36,20 @@ function startKeyServer(publicKey) {
     console.log("analyst is running on port", port);
   });
   return server;
+}
+
+// decrypts the analyst's share
+function decrypt(obj, privateKey) {
+  const senderPublicKey = new Uint8Array(JSON.parse(obj.senderPublicKey));
+  const cipherText = new Uint8Array(JSON.parse(obj.cipherText));
+  const nonce = new Uint8Array(JSON.parse(obj.nonce));
+  const plainText = sodium.crypto_box_open_easy(
+    cipherText,
+    nonce,
+    senderPublicKey,
+    privateKey,
+  );
+  return parseInt(String.fromCharCode.apply(null, plainText));
 }
 
 async function main() {
@@ -63,10 +77,12 @@ async function main() {
         assert(sender_id === "s1");
 
         // Parse shares from JSON.
-        let analystShares = JSON.parse(message);
+        let analystSharesEncrypted = JSON.parse(message);
+        // decrypt each share
+        let analystShares = analystSharesEncrypted.map((obj) =>
+          decrypt(obj, privateKey),
+        );
 
-        // In principle, the shares should be encrypted, and you must first decrypt
-        // them here using the analyst's key.
         let shares = [];
         for (let i = 0; i < analystShares.length; i++) {
           shares.push(
