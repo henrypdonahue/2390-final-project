@@ -1,9 +1,8 @@
 const sodium = require("libsodium-wrappers-sumo");
 const { JIFFClient } = require("jiff-mpc");
 const axios = require("axios");
-const fs = require("fs");
+const config = require("./config");
 
-const config = JSON.parse(fs.readFileSync("config.json"));
 const serverHost = config.server.host;
 const serverPort = config.server.port;
 const analystHost = config.analyst.host;

@@ -1,11 +1,10 @@
 const assert = require("assert");
 const { JIFFClient } = require("jiff-mpc");
-const fs = require("fs");
 const readline = require("readline");
 const sodium = require("libsodium-wrappers");
 const express = require("express");
+const config = require("./config");
 
-const config = JSON.parse(fs.readFileSync("config.json"));
 const serverHost = config.server.host;
 const serverPort = config.server.port;
 const port = config.analyst.port;
