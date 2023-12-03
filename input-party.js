@@ -5,8 +5,6 @@ const config = require('./config');
 
 const serverHost = config.server.host;
 const serverPort = config.server.port;
-const analystHost = config.analyst.host;
-const analystPort = config.analyst.port;
 
 // sends submit request to server
 async function submitData(tokenShares, inputShares) {
@@ -38,7 +36,7 @@ async function deleteData(tokenShares) {
 
 // request for analyst's public key
 async function getPublicKey() {
-  const url = 'http://' + analystHost + ':' + analystPort + '/public-key';
+  const url = 'http://' + serverHost + ':' + serverPort + '/public-key';
   const response = await axios.get(url);
   return new Uint8Array(JSON.parse(response.data.message));
 }

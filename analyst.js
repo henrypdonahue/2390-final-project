@@ -20,18 +20,10 @@ async function generateKeyPair() {
   return sodium.crypto_box_keypair();
 }
 
-function startServer(publicKey, zeroServerShare) {
+function startServer(zeroServerShare) {
   // start listening for public key requests
   const app = express();
   app.use(express.json());
-  // endpoint for serving public key requests
-  app.get('/public-key', (_req, res) => {
-    if (publicKey === null) {
-      res.status(404).json({ error: 'Public key not found' });
-    } else {
-      res.status(200).json({ message: '[' + publicKey.toString() + ']' });
-    }
-  });
   // endpoint for serving secret share of 0
   // one share held by analyst, another held by server
   app.get('/zero-share', (_req, res) => {
@@ -86,9 +78,10 @@ async function main() {
     2,
     jiffClient.Zp,
   );
-  const server = startServer(publicKey, zeroServerShare);
+  const server = startServer(zeroServerShare);
   jiffClient.wait_for([1, 's1'], async function () {
     // send public key to server
+    jiffClient.emit('public-key', ['s1'], '[' + publicKey.toString() + ']');
     console.log('computation initialized, press enter to start...');
     process.stdout.write('> ');
     rl.on('line', function (_) {
