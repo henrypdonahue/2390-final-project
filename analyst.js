@@ -20,7 +20,7 @@ async function generateKeyPair() {
   return sodium.crypto_box_keypair();
 }
 
-function startKeyServer(publicKey) {
+function startServer(publicKey, zeroServerShare) {
   // start listening for public key requests
   const app = express();
   app.use(express.json());
@@ -31,6 +31,11 @@ function startKeyServer(publicKey) {
     } else {
       res.status(200).json({ message: "[" + publicKey.toString() + "]" });
     }
+  });
+  // endpoint for serving secret share of 0
+  // one share held by analyst, another held by server
+  app.get("/zero-share", (_req, res) => {
+    res.status(200).json({ message: zeroServerShare.toString() });
   });
   const server = app.listen(port, () => {
     console.log("analyst is running on port", port);
@@ -53,9 +58,6 @@ function decrypt(obj, privateKey) {
 }
 
 async function main() {
-  // generate key pair
-  const { publicKey, privateKey } = await generateKeyPair();
-  const server = startKeyServer(publicKey);
   // Connect to the server.
   const jiffClient = new JIFFClient(
     "http://" + serverHost + ":" + serverPort,
@@ -66,6 +68,26 @@ async function main() {
       party_count: 2,
     },
   );
+  // generate key pair
+  const { publicKey, privateKey } = await generateKeyPair();
+  // generate shares of 0
+  const zeroShares = jiffClient.hooks.computeShares(
+    jiffClient,
+    0,
+    [1, "s1"],
+    2,
+    jiffClient.Zp,
+  );
+  const zeroServerShare = zeroShares[1];
+  // create jiff secret share object for analyst zero share
+  const zeroAnalystShare = new jiffClient.SecretShare(
+    zeroShares["s1"],
+    [1, "s1"],
+    2,
+    jiffClient.Zp,
+  );
+  console.log(zeroShares);
+  const server = startServer(publicKey, zeroServerShare);
   jiffClient.wait_for([1, "s1"], async function () {
     // send public key to server
     console.log("computation initialized, press enter to start...");
@@ -78,30 +100,31 @@ async function main() {
         assert(sender_id === "s1");
 
         // Parse shares from JSON.
-        let analystSharesEncrypted = JSON.parse(message);
-        // decrypt each share
-        let analystShares = analystSharesEncrypted.map((obj) =>
-          decrypt(obj, privateKey),
-        );
-
-        let shares = [];
-        for (let i = 0; i < analystShares.length; i++) {
-          shares.push(
-            new jiffClient.SecretShare(
-              analystShares[i],
+        let sharesEncrypted = JSON.parse(message);
+        // decrypt each share, and turn into JIFF secret share objects
+        let shares = sharesEncrypted.map((obj) => {
+          return {
+            token: new jiffClient.SecretShare(
+              decrypt(obj["token"], privateKey),
               [1, "s1"],
               2,
-              jiffClient.Zp,
+              jiffClient.Zp
             ),
-          );
-        }
-
+            input: new jiffClient.SecretShare(
+              decrypt(obj["input"], privateKey),
+              [1, "s1"],
+              2,
+              jiffClient.Zp
+            ),
+          };
+        });
+        
         // calculate sum
         let output = 0;
         if (shares.length > 0) {
-          let sum = shares[0];
-          for (let i = 1; i < shares.length; i++) {
-            sum = sum.sadd(shares[i]);
+          let sum = zeroAnalystShare;
+          for (let i = 0; i < shares.length; i++) {
+            sum = sum.sadd(shares[i]["input"]);
           }
           // reveal results
           output = await jiffClient.open(sum, [1, "s1"]);
