@@ -4,9 +4,9 @@
   "description": "A (basic) demo for asynchronously and securly summing secrets from many input parties, with only two compute parties: a server, and an analyst.",
   "main": "analyst.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "format": "npx prettier --write \"*.+(js|jsx|json|vue)\""
+    "lint": "npx eslint . --fix",
+    "format": "npx prettier --write ."
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +16,13 @@
     "jiff-mpc": "^1.0.0",
     "libsodium-wrappers": "^0.7.13",
     "libsodium-wrappers-sumo": "^0.7.13"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-n": "^16.3.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.1.0"
   }
 }
