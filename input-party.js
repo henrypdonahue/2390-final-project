@@ -74,6 +74,19 @@ function encrypt(plainText, recipientPublicKey) {
   };
 }
 
+function stringToInt(input) {
+  let hash = 0;
+  if (input.length === 0) {
+    return hash;
+  }
+  for (let i = 0; i < input.length; i++) {
+    let ch = input.charCodeAt(i);
+    hash = (hash << 5) - hash + ch;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 // Read command line arguments
 async function main() {
   const command = process.argv[2];
@@ -88,7 +101,7 @@ async function main() {
 
   if (command === 'input') {
     // Share the input with server
-    let token = parseInt(process.argv[3], 10);
+    let token = stringToInt(process.argv[3], 10);
     let input = parseInt(process.argv[4], 10);
 
     // send shares along with random token to server via some http request.
@@ -114,7 +127,7 @@ async function main() {
     console.log('to delete submission, use token: ', token);
   } else if (command === 'delete') {
     // send deletion request to server
-    let token = parseInt(process.argv[3], 10);
+    let token = stringToInt(process.argv[3], 10);
     let tokenShares = jiffClient.hooks.computeShares(
       jiffClient,
       token,
