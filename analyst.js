@@ -38,7 +38,7 @@ function startServer(publicKey, zeroServerShare) {
     res.status(200).json({ message: zeroServerShare.toString() });
   });
   const server = app.listen(port, () => {
-    console.log('analyst is running on port', port);
+    console.log('ANALYST listening on *:', port);
   });
   return server;
 }

@@ -61,7 +61,7 @@ async function getZeroShare() {
 async function main() {
   // Start the server
   const server = http.listen(port, function () {
-    console.log('listening on *:', port);
+    console.log('SERVER listening on *:', port);
   });
 
   // Create JIFF server

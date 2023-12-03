@@ -21,10 +21,7 @@ async function submitData(tokenShares, inputShares) {
       input: inputShares['s1'],
     },
   };
-  axios
-    .post(url, requestBody)
-    .then((response) => console.log('submit response:', response.statusText))
-    .catch((error) => console.log('failed to submit data:', error.code));
+  axios.post(url, requestBody);
 }
 
 // sends delete request to server
@@ -36,23 +33,13 @@ async function deleteData(tokenShares) {
       serverShare: tokenShares['s1'],
     },
   };
-  axios
-    .delete(url, req)
-    .then((response) => console.log('delete response:', response.statusText))
-    .catch((error) => console.log('failed to delete data:', error.code));
+  axios.delete(url, req);
 }
 
 // request for analyst's public key
 async function getPublicKey() {
   const url = 'http://' + analystHost + ':' + analystPort + '/public-key';
-  const response = await axios.get(url).catch((error) => {
-    console.error(
-      'failed to get public key:',
-      error.code,
-      'try again until analyst online',
-    );
-    throw error;
-  });
+  const response = await axios.get(url);
   return new Uint8Array(JSON.parse(response.data.message));
 }
 
@@ -93,7 +80,16 @@ async function main() {
 
   await sodium.ready;
 
-  let publicKey = await getPublicKey();
+  let publicKey;
+  try {
+    publicKey = await getPublicKey();
+  } catch (error) {
+    console.error(
+      'cannot retrieve analyst public key, try again until analyst connected:',
+      error.code,
+    );
+    return;
+  }
   // create fake jiffclient for computing shares
   const jiffClient = new JIFFClient('fakeurl', 'fakecomputation', {
     autoConnect: false,
@@ -101,13 +97,14 @@ async function main() {
 
   if (command === 'input') {
     // Share the input with server
-    let token = stringToInt(process.argv[3], 10);
-    let input = parseInt(process.argv[4], 10);
+    const token = process.argv[3];
+    const tokenInt = stringToInt(process.argv[3], 10);
+    const input = parseInt(process.argv[4], 10);
 
     // send shares along with random token to server via some http request.
     let tokenShares = jiffClient.hooks.computeShares(
       jiffClient,
-      token,
+      tokenInt,
       [1, 's1'],
       2,
       jiffClient.Zp,
@@ -123,20 +120,33 @@ async function main() {
     tokenShares[1] = encrypt(tokenShares[1], publicKey);
     inputShares[1] = encrypt(inputShares[1], publicKey);
     // send submit data request
-    await submitData(tokenShares, inputShares);
-    console.log('to delete submission, use token: ', token);
+    try {
+      await submitData(tokenShares, inputShares);
+      console.log('submission success:');
+      console.log('user token:', token);
+      console.log('data:', input);
+    } catch (error) {
+      console.error('submission failed:', error);
+    }
   } else if (command === 'delete') {
     // send deletion request to server
-    let token = stringToInt(process.argv[3], 10);
+    const token = process.argv[3];
+    const tokenInt = stringToInt(token, 10);
     let tokenShares = jiffClient.hooks.computeShares(
       jiffClient,
-      token,
+      tokenInt,
       [1, 's1'],
       2,
       jiffClient.Zp,
     );
     tokenShares[1] = encrypt(tokenShares[1], publicKey);
-    await deleteData(tokenShares);
+    try {
+      await deleteData(tokenShares);
+      console.log('deletion request recorded:');
+      console.log('user token:', token);
+    } catch (error) {
+      console.error('deletion request failed:', error);
+    }
   }
 }
 
