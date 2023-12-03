@@ -8,6 +8,14 @@ npm install
 
 ## Running
 
+### Automatic
+
+```bash
+make run
+```
+
+### Manual
+
 Run the server first with
 
 ```bash
@@ -33,3 +41,10 @@ node input-party.js delete <token>
 ```
 
 End the session in the analyst terminal by hitting enter
+
+## Formatting
+
+```bash
+npm run lint
+npm run format
+```

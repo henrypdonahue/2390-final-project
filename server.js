@@ -4,6 +4,7 @@ const { JIFFServer } = require('jiff-mpc');
 const express = require('express');
 const axios = require('axios');
 const config = require('./config');
+const mpcSum = require('./computation/sum');
 
 const port = config.server.port;
 const analystHost = config.analyst.host;
@@ -112,23 +113,10 @@ async function main() {
         (token) =>
           new jiffClient.SecretShare(token, [1, 's1'], 2, jiffClient.Zp),
       );
-      // calculate sum
-      let output = 0;
-      if (shares.length > 0) {
-        let sum = zeroShare;
-        for (let i = 0; i < shares.length; i++) {
-          let currentSubmission = shares[i]['input'];
-          let currentToken = shares[i]['token'];
-          for (let j = 0; j < deleteReqShares.length; j++) {
-            currentSubmission = currentToken
-              .seq(deleteReqShares[j])
-              .if_else(zeroShare, currentSubmission);
-          }
-          sum = sum.sadd(currentSubmission);
-        }
-        // reveal results
-        output = await jiffClient.open(sum, [1, 's1']);
-      }
+      // start computation
+      const sum = mpcSum(shares, deleteReqShares, zeroShare);
+      // open result
+      const output = await jiffClient.open(sum, [1, 's1']);
       console.log('Result is', output);
       jiffClient.disconnect(true, true);
       server.close();
