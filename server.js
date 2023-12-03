@@ -12,7 +12,9 @@ const analystPort = config.analyst.port;
 
 const app = express();
 
+// data of all input parties
 let DB = [];
+// data of tokens of users who sent deletion request
 let DeletionReq = [];
 
 // Middleware to parse JSON request bodies
@@ -56,24 +58,22 @@ async function main() {
   jiffServer.computationMaps.maxCount["test"] = 2;
 
   // Specify the computation server code for this demo
-  let computationClient = jiffServer.compute("test", { crypto_provider: true });
-  computationClient.wait_for([1, "s1"], async function () {
+  let jiffClient = jiffServer.compute("test", { crypto_provider: true });
+  jiffClient.wait_for([1, "s1"], async function () {
     console.log("analyst connected!");
-    computationClient.listen("begin", async function () {
-      let zeroShare = await getZeroShare();
-      zeroShare = new computationClient.SecretShare(
-        zeroShare,
+    jiffClient.listen("begin", async function () {
+      // obtain server share of 0 from analyst
+      // create jiff secret share object
+      let zeroShare = new jiffClient.SecretShare(
+        await getZeroShare(),
         [1, "s1"],
         2,
-        computationClient.Zp,
+        jiffClient.Zp,
       );
       // Send all the shares of the analyst to the analyst (they should be encrypted)
       // Keep the shares of the server here.
       let analystShares = [];
-      let serverShares = {
-        tokens: [],
-        inputs: [],
-      };
+      let serverShares = [];
       for (let i = 0; i < DB.length; i++) {
         const token = DB[i]["token"];
         const input = DB[i]["input"];
@@ -81,40 +81,48 @@ async function main() {
           token: token["analystShare"],
           input: input["analystShare"],
         });
-        serverShares.tokens.push(token["serverShare"]);
-        serverShares.inputs.push(input["serverShare"]);
+        serverShares.push({
+          token: token["serverShare"],
+          input: input["serverShare"],
+        });
       }
 
       // send the analyst shares to the analyst (party with id = 1).
-      computationClient.emit("shares", [1], JSON.stringify(analystShares));
+      jiffClient.emit("shares", [1], JSON.stringify(analystShares));
+      // send the analyst tokens of users who sent deletion requests
+
 
       // turn the server shares to JIFF secret share objects.
-      let inputShares = [];
-      console.log(serverShares);
-      for (let i = 0; i < serverShares["inputs"].length; i++) {
-        inputShares.push(
-          new computationClient.SecretShare(
-            serverShares["inputs"][i],
+      let shares = serverShares.map((obj) => {
+        return {
+          token: new jiffClient.SecretShare(
+            obj["token"],
             [1, "s1"],
             2,
-            computationClient.Zp,
+            jiffClient.Zp
           ),
-        );
-      }
+          input: new jiffClient.SecretShare(
+            obj["input"],
+            [1, "s1"],
+            2,
+            jiffClient.Zp
+          ),
+        };
+      });
 
       // calculate sum
       let output = 0;
-      console.log(inputShares);
-      if (inputShares.length > 0) {
+      console.log(shares);
+      if (shares.length > 0) {
         let sum = zeroShare;
-        for (let i = 0; i < inputShares.length; i++) {
-          sum = sum.sadd(inputShares[i]);
+        for (let i = 0; i < shares.length; i++) {
+          sum = sum.sadd(shares[i]["input"]);
         }
         // reveal results
-        output = await computationClient.open(sum, [1, "s1"]);
+        output = await jiffClient.open(sum, [1, "s1"]);
       }
       console.log("Result is", output);
-      computationClient.disconnect(true, true);
+      jiffClient.disconnect(true, true);
       server.close();
     });
   });
