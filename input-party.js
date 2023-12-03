@@ -13,13 +13,13 @@ const analystPort = config.analyst.port;
 async function submitData(tokenShares, inputShares) {
   const url = "http://" + serverHost + ":" + serverPort + "/submit";
   const requestBody = {
-    token: {
-      analystShare: tokenShares[1],
-      serverShare: tokenShares["s1"],
+    analystShare: {
+      token: tokenShares[1],
+      input: inputShares[1],
     },
-    input: {
-      analystShare: inputShares[1],
-      serverShare: inputShares["s1"],
+    serverShare: {
+      token: tokenShares["s1"],
+      input: inputShares["s1"],
     },
   };
   axios
@@ -33,10 +33,8 @@ async function deleteData(tokenShares) {
   const url = "http://" + serverHost + ":" + serverPort + "/delete";
   const req = {
     data: {
-      token: {
-        analystShare: tokenShares[1],
-        serverShare: tokenShares["s1"],
-      },
+      analystShare: tokenShares[1],
+      serverShare: tokenShares["s1"],
     },
   };
   axios
@@ -89,7 +87,7 @@ async function main() {
 
   if (command === "input") {
     // Share the input with server
-    let token = process.argv[3];
+    let token = parseInt(process.argv[3], 10);
     let input = parseInt(process.argv[4], 10);
 
     // send shares along with random token to server via some http request.

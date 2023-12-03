@@ -78,15 +78,14 @@ async function main() {
     2,
     jiffClient.Zp,
   );
-  const zeroServerShare = zeroShares[1];
+  const zeroServerShare = zeroShares["s1"];
   // create jiff secret share object for analyst zero share
   const zeroAnalystShare = new jiffClient.SecretShare(
-    zeroShares["s1"],
+    zeroShares["1"],
     [1, "s1"],
     2,
     jiffClient.Zp,
   );
-  console.log(zeroShares);
   const server = startServer(publicKey, zeroServerShare);
   jiffClient.wait_for([1, "s1"], async function () {
     // send public key to server
@@ -97,12 +96,12 @@ async function main() {
       jiffClient.emit("begin", ["s1"], "");
       // Receive the analyst shares from server.
       jiffClient.listen("shares", async function (sender_id, message) {
+        // ensure message comes from analyst
         assert(sender_id === "s1");
-
         // Parse shares from JSON.
-        let sharesEncrypted = JSON.parse(message);
+        const dataEncrypted = JSON.parse(message);
         // decrypt each share, and turn into JIFF secret share objects
-        let shares = sharesEncrypted.map((obj) => {
+        const shares = dataEncrypted.shares.map((obj) => {
           return {
             token: new jiffClient.SecretShare(
               decrypt(obj["token"], privateKey),
@@ -118,13 +117,25 @@ async function main() {
             ),
           };
         });
-        
+        const deleteReqShares = dataEncrypted.deleteShares.map((token) => 
+          new jiffClient.SecretShare(
+            decrypt(token, privateKey),
+            [1, "s1"],
+            2,
+            jiffClient.Zp
+          )
+        );
         // calculate sum
         let output = 0;
         if (shares.length > 0) {
           let sum = zeroAnalystShare;
           for (let i = 0; i < shares.length; i++) {
-            sum = sum.sadd(shares[i]["input"]);
+            let currentSubmission = shares[i]["input"];
+            let currentToken = shares[i]["token"];
+            for (let j = 0; j < deleteReqShares.length; j++) {
+              currentSubmission = currentToken.seq(deleteReqShares[j]).if_else(zeroAnalystShare, currentSubmission);
+            }
+            sum = sum.sadd(currentSubmission);
           }
           // reveal results
           output = await jiffClient.open(sum, [1, "s1"]);

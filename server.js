@@ -13,23 +13,32 @@ const analystPort = config.analyst.port;
 const app = express();
 
 // data of all input parties
-let DB = [];
+let DB = {
+  analystShares: [],
+  serverShares: [],
+};
 // data of tokens of users who sent deletion request
-let DeletionReq = [];
+let DeletionReq = {
+  analystShares: [],
+  serverShares: [],
+};
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 // endpoint for submitting data
 app.post("/submit", (req, res) => {
-  DB.push(req.body);
+  const data = req.body;
+  DB["analystShares"].push(data["analystShare"]);
+  DB["serverShares"].push(data["serverShare"]);
   res.status(200).json({ message: "data submitted successfully" });
 });
 
 // endpoint for deleting data based on a token
 app.delete("/delete", (req, res) => {
-  const token = req.body.token;
-  DeletionReq.push(token);
+  const data = req.body;
+  DeletionReq["analystShares"].push(data["analystShare"]);
+  DeletionReq["serverShares"].push(data["serverShare"]);
   res.status(200).json({ message: "deletion request recorded" });
 });
 
@@ -64,36 +73,25 @@ async function main() {
     jiffClient.listen("begin", async function () {
       // obtain server share of 0 from analyst
       // create jiff secret share object
-      let zeroShare = new jiffClient.SecretShare(
+      const zeroShare = new jiffClient.SecretShare(
         await getZeroShare(),
         [1, "s1"],
         2,
         jiffClient.Zp,
       );
-      // Send all the shares of the analyst to the analyst (they should be encrypted)
-      // Keep the shares of the server here.
-      let analystShares = [];
-      let serverShares = [];
-      for (let i = 0; i < DB.length; i++) {
-        const token = DB[i]["token"];
-        const input = DB[i]["input"];
-        analystShares.push({
-          token: token["analystShare"],
-          input: input["analystShare"],
-        });
-        serverShares.push({
-          token: token["serverShare"],
-          input: input["serverShare"],
-        });
-      }
+      const serverShares = DB["serverShares"];
+      const serverDeleteShares = DeletionReq["serverShares"];
+      const analystData = {
+        shares: DB["analystShares"],
+        deleteShares: DeletionReq["analystShares"],
+      };
 
       // send the analyst shares to the analyst (party with id = 1).
-      jiffClient.emit("shares", [1], JSON.stringify(analystShares));
-      // send the analyst tokens of users who sent deletion requests
+      jiffClient.emit("shares", [1], JSON.stringify(analystData));
 
-
+      // ===== computation below =====
       // turn the server shares to JIFF secret share objects.
-      let shares = serverShares.map((obj) => {
+      const shares = serverShares.map((obj) => {
         return {
           token: new jiffClient.SecretShare(
             obj["token"],
@@ -109,14 +107,25 @@ async function main() {
           ),
         };
       });
-
+      const deleteReqShares = serverDeleteShares.map((token) => 
+        new jiffClient.SecretShare(
+          token,
+          [1, "s1"],
+          2,
+          jiffClient.Zp
+        )
+      );
       // calculate sum
       let output = 0;
-      console.log(shares);
       if (shares.length > 0) {
         let sum = zeroShare;
         for (let i = 0; i < shares.length; i++) {
-          sum = sum.sadd(shares[i]["input"]);
+          let currentSubmission = shares[i]["input"];
+          let currentToken = shares[i]["token"];
+          for (let j = 0; j < deleteReqShares.length; j++) {
+            currentSubmission = currentToken.seq(deleteReqShares[j]).if_else(zeroShare, currentSubmission);
+          }
+          sum = sum.sadd(currentSubmission);
         }
         // reveal results
         output = await jiffClient.open(sum, [1, "s1"]);
