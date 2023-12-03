@@ -2,13 +2,11 @@ const assert = require('assert');
 const { JIFFClient } = require('jiff-mpc');
 const readline = require('readline');
 const sodium = require('libsodium-wrappers');
-const express = require('express');
 const config = require('./config');
 const mpcSum = require('./computation/sum');
 
 const serverHost = config.server.host;
 const serverPort = config.server.port;
-const port = config.analyst.port;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -18,21 +16,6 @@ const rl = readline.createInterface({
 async function generateKeyPair() {
   await sodium.ready;
   return sodium.crypto_box_keypair();
-}
-
-function startServer(zeroServerShare) {
-  // start listening for public key requests
-  const app = express();
-  app.use(express.json());
-  // endpoint for serving secret share of 0
-  // one share held by analyst, another held by server
-  app.get('/zero-share', (_req, res) => {
-    res.status(200).json({ message: zeroServerShare.toString() });
-  });
-  const server = app.listen(port, () => {
-    console.log('ANALYST listening on *:', port);
-  });
-  return server;
 }
 
 // decrypts the analyst's share
@@ -78,10 +61,12 @@ async function main() {
     2,
     jiffClient.Zp,
   );
-  const server = startServer(zeroServerShare);
   jiffClient.wait_for([1, 's1'], async function () {
     // send public key to server
     jiffClient.emit('public-key', ['s1'], '[' + publicKey.toString() + ']');
+    // send zero share to server
+    jiffClient.emit('zero-share', ['s1'], zeroServerShare.toString());
+
     console.log('computation initialized, press enter to start...');
     process.stdout.write('> ');
     rl.on('line', function (_) {
@@ -127,7 +112,6 @@ async function main() {
         // shutdown
         jiffClient.disconnect(true, true);
         rl.close();
-        server.close();
       });
     });
   });

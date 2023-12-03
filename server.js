@@ -2,14 +2,11 @@
 let http = require('http');
 const { JIFFServer } = require('jiff-mpc');
 const express = require('express');
-const axios = require('axios');
 const config = require('./config');
 const mpcSum = require('./computation/sum');
 const { assert } = require('console');
 
 const port = config.server.port;
-const analystHost = config.analyst.host;
-const analystPort = config.analyst.port;
 
 const app = express();
 
@@ -25,6 +22,8 @@ let DeletionReq = {
 };
 // public key of analyst
 let publicKey = null;
+// server share of value 0
+let zeroShare = null;
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
@@ -56,20 +55,6 @@ app.get('/public-key', (_req, res) => {
 
 http = http.Server(app);
 
-// request for server's share of zero
-async function getZeroShare() {
-  const url = 'http://' + analystHost + ':' + analystPort + '/zero-share';
-  const response = await axios.get(url).catch((error) => {
-    console.error(
-      'failed to get public key:',
-      error.code,
-      'try again until analyst online',
-    );
-    throw error;
-  });
-  return parseInt(JSON.parse(response.data.message), 10);
-}
-
 async function main() {
   // Start the server
   const server = http.listen(port, function () {
@@ -84,59 +69,64 @@ async function main() {
   let jiffClient = jiffServer.compute('test', { crypto_provider: true });
   jiffClient.wait_for([1, 's1'], async function () {
     console.log('analyst connected!');
+    // receive public key from analyst
     jiffClient.listen('public-key', async function (sender_id, message) {
       // ensure public key comes from analyst
       assert(sender_id === 1);
       // store public key
       publicKey = new Uint8Array(JSON.parse(message));
-      jiffClient.listen('begin', async function () {
-        // obtain server share of 0 from analyst
-        // create jiff secret share object
-        const zeroShare = new jiffClient.SecretShare(
-          await getZeroShare(),
+      // receive zero share from analyst
+      jiffClient.listen('zero-share', async function (sender_id, message) {
+        // ensure zero share comes from analyst
+        assert(sender_id === 1);
+        // store zero share, and create jiff secret share object
+        zeroShare = new jiffClient.SecretShare(
+          parseInt(JSON.parse(message)),
           [1, 's1'],
           2,
           jiffClient.Zp,
         );
-        const serverShares = DB['serverShares'];
-        const serverDeleteShares = DeletionReq['serverShares'];
-        const analystData = {
-          shares: DB['analystShares'],
-          deleteShares: DeletionReq['analystShares'],
-        };
-
-        // send the analyst shares to the analyst (party with id = 1).
-        jiffClient.emit('shares', [1], JSON.stringify(analystData));
-
-        // ===== computation below =====
-        // turn the server shares to JIFF secret share objects.
-        const shares = serverShares.map((obj) => {
-          return {
-            token: new jiffClient.SecretShare(
-              obj['token'],
-              [1, 's1'],
-              2,
-              jiffClient.Zp,
-            ),
-            input: new jiffClient.SecretShare(
-              obj['input'],
-              [1, 's1'],
-              2,
-              jiffClient.Zp,
-            ),
+        jiffClient.listen('begin', async function () {
+          const serverShares = DB['serverShares'];
+          const serverDeleteShares = DeletionReq['serverShares'];
+          const analystData = {
+            shares: DB['analystShares'],
+            deleteShares: DeletionReq['analystShares'],
           };
+
+          // send the analyst shares to the analyst (party with id = 1).
+          jiffClient.emit('shares', [1], JSON.stringify(analystData));
+
+          // ===== computation below =====
+          // turn the server shares to JIFF secret share objects.
+          const shares = serverShares.map((obj) => {
+            return {
+              token: new jiffClient.SecretShare(
+                obj['token'],
+                [1, 's1'],
+                2,
+                jiffClient.Zp,
+              ),
+              input: new jiffClient.SecretShare(
+                obj['input'],
+                [1, 's1'],
+                2,
+                jiffClient.Zp,
+              ),
+            };
+          });
+          const deleteReqShares = serverDeleteShares.map(
+            (token) =>
+              new jiffClient.SecretShare(token, [1, 's1'], 2, jiffClient.Zp),
+          );
+          // start computation
+          const sum = mpcSum(shares, deleteReqShares, zeroShare);
+          // open result
+          const output = await jiffClient.open(sum, [1, 's1']);
+          console.log('Result is', output);
+          jiffClient.disconnect(true, true);
+          server.close();
         });
-        const deleteReqShares = serverDeleteShares.map(
-          (token) =>
-            new jiffClient.SecretShare(token, [1, 's1'], 2, jiffClient.Zp),
-        );
-        // start computation
-        const sum = mpcSum(shares, deleteReqShares, zeroShare);
-        // open result
-        const output = await jiffClient.open(sum, [1, 's1']);
-        console.log('Result is', output);
-        jiffClient.disconnect(true, true);
-        server.close();
       });
     });
   });
