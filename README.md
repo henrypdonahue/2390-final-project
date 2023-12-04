@@ -8,12 +8,6 @@ npm install
 
 ## Running
 
-### Automatic
-
-```bash
-make run
-```
-
 ### Manual
 
 Run the server first with
@@ -31,16 +25,24 @@ node analyst.js
 Input data with
 
 ```bash
-node input-party.js input <token> 100
+node input-party.js input <token/email> 100
 ```
 
 Delete data before analyst runs compute
 
 ```bash
-node input-party.js delete <token>
+node input-party.js delete <token/email>
 ```
 
 End the session in the analyst terminal by hitting enter
+
+### Automatic
+
+```bash
+make run
+```
+
+Input in the 3rd window as the input party
 
 ## Formatting
 
