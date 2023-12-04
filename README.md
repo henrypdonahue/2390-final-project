@@ -31,7 +31,7 @@ node analyst.js
 Input data with
 
 ```bash
-node input-party.js input 100
+node input-party.js input <token> 100
 ```
 
 Delete data before analyst runs compute
