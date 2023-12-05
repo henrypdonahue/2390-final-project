@@ -1,3 +1,5 @@
+const path = require('path');
+
 // Dependencies
 let http = require('http');
 const { JIFFServer } = require('jiff-mpc');
@@ -6,9 +8,18 @@ const config = require('./config');
 const mpcSum = require('./computation/sum');
 const { assert } = require('console');
 
+
 const port = config.server.port;
 
 const app = express();
+
+
+app.use('/', express.static(path.join(__dirname)));
+// sendFile will go here
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname, '/index.html'));
+  res.sendFile(path.join(__dirname, '/input-party.bundle.js'));
+});
 
 // data of all input parties
 let DB = {

@@ -1,0 +1,26 @@
+<!-- Basic UI for running the demo in the browser -->
+<html>
+  <head>
+    <title>Average integers under MPC</title>
+    <style>
+      .error {
+        color: #FF0000;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="input-party.bundle.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <form action="javascript:;" onsubmit="party.main(this)">
+      <input type="radio" id="input-option" name="fav_language" value="Input">
+      <label for="input-option">Input</label><br>
+      <input type="radio" id="delete-option" name="fav_language" value="Delete">
+      <label for="delete-option">Delete</label><br>
+      <label for="token">Token:</label><br>
+      <input type="text" id="token" name="token"><br>
+      <label for="value">Value:</label><br>
+      <input type="number" id="value" name="value">
+      <input type="submit">
+    </form>
+  </body>
+</html>

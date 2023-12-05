@@ -44,6 +44,12 @@ make run
 
 Input in the 3rd window as the input party
 
+### Test
+
+```bash
+sh /file/pagth/to/input.sh
+```
+
 ## Formatting
 
 ```bash
