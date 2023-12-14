@@ -185,3 +185,6 @@ typings/
 
 logs/
 *.swp
+
+# test output
+.tmp.time
