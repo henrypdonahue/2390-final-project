@@ -123,7 +123,7 @@ async function main() {
           const sum = mpcSum(shares, deleteReqShares, zeroShare);
           // open result
           const output = await jiffClient.open(sum, [1, 's1']);
-          console.log('Result is', output);
+          console.log('MPC result is', output);
           jiffClient.disconnect(true, true);
           server.close();
         });
