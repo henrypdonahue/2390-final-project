@@ -23,6 +23,6 @@ node server.js 2>&1 > /dev/null &
 # wait for server initialize
 sleep 1
 # wait for analyst initialize
-{ sleep 1 && test/input.sh $input_cnt $delete_cnt && echo -e '\n' && printf "begin time: %s\n" $(date +%s) > .tmp.time; } | node analyst.js &
+{ sleep 1 && test/input.sh $input_cnt $delete_cnt && echo -e '\n' && printf "begin time: %s\n" $(gdate +%s.%N) > .tmp.time; } | node analyst.js &
 wait $!
-printf "end time: %s\n" $(date +%s) >> .tmp.time
+printf "end time: %s\n" $(gdate +%s.%N) >> .tmp.time

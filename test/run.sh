@@ -8,13 +8,13 @@ run_benchmark() {
   delete_cnt=$2
 
   # run the benchmark and redirect the output to a temporary file
-  test/run_once.sh $input_cnt $delete_cnt 2>&1 > .tmp.time
+  test/run_once.sh $input_cnt $delete_cnt 2>&1 > /dev/null
   
   # extract the begin_time and end_time from the temporary file
   begin_time=$(awk '/begin time:/{print $NF}' .tmp.time)
   end_time=$(awk '/end time:/{print $NF}' .tmp.time)
   
-  runtime=$((end_time - begin_time))
+  runtime=$(echo "$end_time - $begin_time" | bc)
   
   echo "$input_cnt,$delete_cnt,$runtime" >> benchmark_results.csv
 }
