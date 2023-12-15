@@ -1,5 +1,12 @@
 # HumMPC: Summation with Private Deletion
 
+## Goals
+
+Secure multi-party computation allows input-parties to perform operations on their data without anyone being able to know another individual's data.
+
+HumMPC implements an algorithm that not only performs secure summation, but also allows input-parties to securely delete their data using a token easy to remember, such as an email address, which will also be kept private. Also, the deletion process is private, as no one would know who have requested deletion.
+
+
 ## Installation
 
 ```bash
@@ -44,23 +51,19 @@ node input-party.js delete ${token}
 make run
 ```
 
-Input in the 3rd window as the input party
+Input in the 3rd window as the input party described in the manual guide. You can run sh test/sample_input.sh to automate 6 inputs and 2 deletes.
 
-## Goals
 
-Secure multi-party computation allows input-parties to perform aggregations on their data without anyone being able to know another individual's data.
-
-HumMPC implements an algorithm that not only performs secure summation, but also allows input-parties to securely delete their data using a token easy to remember, such as an email address, which will also be kept private. Also, the deletion process is private, as no one would know who have requested deletion.
-
-### Base algorithm for summation
+### Base algorithm for data division, storage and computation
 
 ![](base.gif)
 
-## Benchmark
+## Tests
 
-See `test` folder
+See `test` folder to find our method time anaylsis.
 
 ## Formatting
+To format javascript files run,
 
 ```bash
 npm run lint
