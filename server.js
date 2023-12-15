@@ -4,6 +4,7 @@ const { JIFFServer } = require('jiff-mpc');
 const express = require('express');
 const config = require('./config');
 const mpcSum = require('./computation/sum');
+const mpcAverage = require('./computation/average');
 const { assert } = require('console');
 
 const port = config.server.port;
@@ -122,8 +123,10 @@ async function main() {
           // start computation
           const sum = mpcSum(shares, deleteReqShares, zeroShare);
           // open result
-          const output = await jiffClient.open(sum, [1, 's1']);
-          console.log('MPC result is', output);
+          const output = await jiffClient.open(sum[0], [1, 's1']);
+          console.log('MPC result is', output / sum[1]);
+
+          // shutdown
           jiffClient.disconnect(true, true);
           server.close();
         });

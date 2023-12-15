@@ -1,5 +1,6 @@
 function mpcSum(shares, deleteReqShares, zeroShare) {
   let sum = zeroShare;
+
   if (shares.length > 0) {
     for (let i = 0; i < shares.length; i++) {
       let currentSubmission = shares[i]['input'];
@@ -12,7 +13,7 @@ function mpcSum(shares, deleteReqShares, zeroShare) {
       sum = sum.sadd(currentSubmission);
     }
   }
-  return sum;
+  return [sum, 1];
 }
 
 module.exports = mpcSum;

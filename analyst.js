@@ -4,6 +4,7 @@ const readline = require('readline');
 const sodium = require('libsodium-wrappers');
 const config = require('./config');
 const mpcSum = require('./computation/sum');
+const mpcAverage = require('./computation/average');
 
 const serverHost = config.server.host;
 const serverPort = config.server.port;
@@ -107,8 +108,9 @@ async function main() {
         // start computation
         const sum = mpcSum(shares, deleteReqShares, zeroAnalystShare);
         // open result
-        const output = await jiffClient.open(sum, [1, 's1']);
-        console.log('MPC result is', output);
+        const output = await jiffClient.open(sum[0], [1, 's1']);
+        console.log('MPC result is', output / sum[1]);
+
         // shutdown
         jiffClient.disconnect(true, true);
         rl.close();
