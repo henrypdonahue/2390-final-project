@@ -53,6 +53,8 @@ make run
 
 Input in the 3rd window as the input party described in the manual guide. You can run sh test/sample_input.sh to automate 6 inputs and 2 deletes.
 
+### How to change computation done (sum or average)
+We have implmented summing and averaging the input-party inputs. In server and analyst mpcAverage and mpcSum are defined at the top. Switch to whichever you like by changing the name under // start computation in both files.
 
 ### Base algorithm for data division, storage and computation
 
